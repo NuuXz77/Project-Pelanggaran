@@ -25,6 +25,7 @@ new class extends Component {
     public $pelanggaran = '';
     public $tindakan = '';
     public $deskripsi = '';
+    public bool $showModal = false;
 
     public function mount()
     {
@@ -110,7 +111,7 @@ new class extends Component {
         }
     }
 
-    public function save()
+    public function save(): void
     {
         try {
             $this->validate([
@@ -122,7 +123,6 @@ new class extends Component {
 
             // Get the selected peraturan and tindakan names
             $selectedPeraturanName = collect($this->peraturanList)->firstWhere('id', $this->selectedPeraturan)['name'] ?? '';
-
             $selectedTingkatName = collect($this->tingkatPelanggaranList)->firstWhere('id', $this->selectedTingkat)['name'] ?? '';
 
             // Simpan data
@@ -146,12 +146,22 @@ new class extends Component {
             // Reset form
             $this->reset(['selectedSiswa', 'selectedPeraturan', 'selectedTingkat', 'nis', 'kelas', 'tindakan', 'deskripsi']);
 
+            // Close modal and emit event
+            $this->showModal = false;
+            $this->dispatch('refresh');
+
             $this->showSuccessToast('Data pelanggaran berhasil disimpan!');
         } catch (\Illuminate\Validation\ValidationException $e) {
             $this->showErrorToast('Validasi gagal: ' . implode(' ', $e->validator->errors()->all()));
         } catch (\Exception $e) {
             $this->showErrorToast('Terjadi kesalahan: ' . $e->getMessage());
         }
+    }
+
+    public function openModal()
+    {
+        $this->showModal = true;
+        $this->reset(['selectedSiswa', 'selectedPeraturan', 'selectedTingkat', 'nis', 'kelas', 'tindakan', 'deskripsi']);
     }
 
     // Toast helper methods
@@ -169,39 +179,42 @@ new class extends Component {
     {
         $this->toast(type: 'warning', title: $title, description: $message, position: 'toast-top toast-end', icon: 'o-exclamation-triangle', css: 'alert-warning', timeout: 4000);
     }
-
-    protected function showInfoToast($message, $title = 'Informasi')
-    {
-        $this->toast(type: 'info', title: $title, description: $message, position: 'toast-top toast-end', icon: 'o-information-circle', css: 'alert-info', timeout: 3000);
-    }
 };
 ?>
-<div class="bg-white p-6 rounded-lg shadow-sm space-y-6">
-    <x-header title="MASUKAN DATA SISWA" size="text-2xl" separator />
-    <x-form wire:submit="save">
-        {{-- Baris 1 --}}
-        <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
-            <x-select-group label="Nama Siswa" :options="$groupedSiswa" option-label="name" option-value="id"
-                wire:model.live="selectedSiswa" placeholder="Pilih Siswa" />
-            <x-input label="NIS" wire:model="nis" readonly />
-            <x-input label="Kelas" wire:model="kelas" readonly />
-        </div>
+<div>
+    <!-- Modal Trigger -->
+    <x-button icon="o-plus" class="btn-primary" wire:click="openModal" />
 
-        {{-- Baris 2 --}}
-        <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
-            <x-select label="Pelanggaran" :options="$peraturanList" wire:model="selectedPeraturan" option-label="name"
-                option-value="id" placeholder="Pilih Pelanggaran" />
-            <x-select label="Tingkat Pelanggaran" :options="$tingkatPelanggaranList" wire:model.live="selectedTingkat"
-                option-label="name" option-value="id" placeholder="Pilih Tingkat Pelanggaran" />
-        </div>
+    <!-- Modal -->
+    <x-modal wire:model="showModal" title="Tambah Data Pelanggaran" separator persistent>
+        <x-form wire:submit="save">
+            {{-- Baris 1 --}}
+            <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
+                <x-select-group label="Nama Siswa" :options="$groupedSiswa" option-label="name" option-value="id"
+                    wire:model.live="selectedSiswa" placeholder="Pilih Siswa" />
+                <x-input label="NIS" wire:model="nis" readonly />
+                <x-input label="Kelas" wire:model="kelas" readonly />
+            </div>
 
-        {{-- Baris 3 --}}
-        <div>
-            <x-textarea label="Tindakan" wire:model="tindakan" placeholder="Otomatis" rows="5" readonly />
-            <x-textarea label="Deskripsi (Opsional)" wire:model="deskripsi" placeholder="Tulis tambahan..."
-                rows="5" />
-        </div>
+            {{-- Baris 2 --}}
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <x-select label="Pelanggaran" :options="$peraturanList" wire:model="selectedPeraturan" option-label="name"
+                    option-value="id" placeholder="Pilih Pelanggaran" />
+                <x-select label="Tingkat Pelanggaran" :options="$tingkatPelanggaranList" wire:model.live="selectedTingkat"
+                    option-label="name" option-value="id" placeholder="Pilih Tingkat Pelanggaran" />
+            </div>
 
-        <x-button label="Simpan" icon="o-plus" class="btn-primary" type="submit" spinner />
-    </x-form>
+            {{-- Baris 3 --}}
+            <div>
+                <x-textarea label="Tindakan" wire:model="tindakan" placeholder="Otomatis" rows="5" readonly />
+                <x-textarea label="Deskripsi (Opsional)" wire:model="deskripsi" placeholder="Tulis tambahan..."
+                    rows="5" />
+            </div>
+
+            <x-slot:actions>
+                <x-button label="Batal" @click="$wire.showModal = false" />
+                <x-button icon="o-check" class="btn-primary" type="submit" spinner />
+            </x-slot:actions>
+        </x-form>
+    </x-modal>
 </div>

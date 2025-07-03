@@ -13,11 +13,11 @@ return new class extends Migration
     {
         Schema::create('tb_guru', function (Blueprint $table) {
             $table->id('ID_Guru');
-            $table->foreignId('kelas_id')->constrained('tb_kelas', 'ID_Kelas');
+            // $table->foreignId('kelas_id')->constrained('tb_kelas', 'ID_Kelas');
             $table->string('nama_guru');
             $table->string('nip')->unique();
             $table->string('password');
-            $table->string('kelas');
+            // $table->string('kelas');
             $table->timestamps();
         });
     }

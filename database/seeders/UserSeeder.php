@@ -13,35 +13,35 @@ class UserSeeder extends Seeder
         // Akun Kesiswaan (hanya satu)
         User::create([
             'name' => 'Admin Kesiswaan',
-            'email' => 'kesiswaan@example.com',
-            'password' => Hash::make('password'),
+            'email' => 'kesiswaan@smkn1ciamis.com',
+            'password' => Hash::make('kesiswaansmkn1ciamis'),
             'role' => 'kesiswaan',
             'status' => 'Aktif'
         ]);
 
         // Akun BK (bisa lebih dari satu)
         User::create([
-            'name' => 'Guru BK 1',
-            'email' => 'bk1@example.com',
-            'password' => Hash::make('password'),
+            'name' => 'Etin',
+            'email' => 'etin@smk1ciamis.com',
+            'password' => Hash::make('bk123'),
             'role' => 'bk',
             'status' => 'Aktif'
         ]);
 
         // Akun Guru (bisa lebih dari satu)
         User::create([
-            'name' => 'Guru Matematika',
-            'email' => 'guru1@example.com',
-            'password' => Hash::make('password'),
+            'name' => 'Udin',
+            'email' => 'Udin@mail.com',
+            'password' => Hash::make('udinudin'),
             'role' => 'guru',
             'status' => 'Aktif'
         ]);
 
         // Akun PKS (bisa lebih dari satu)
         User::create([
-            'name' => 'PKS Kurikulum',
-            'email' => 'pks1@example.com',
-            'password' => Hash::make('password'),
+            'name' => 'User PKS',
+            'email' => 'pks@smkn1ciamis.com',
+            'password' => Hash::make('pks123'),
             'role' => 'pks',
             'status' => 'Aktif'
         ]);

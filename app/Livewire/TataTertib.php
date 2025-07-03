@@ -15,16 +15,15 @@ class TataTertib extends Component
     {
         $this->resetPage();
     }
-    
     use WithPagination;
     public $perPage = 5;    // Header table
     public $headers = [
-        ['key' => 'ID_Peraturan', 'label' => '#', 'class' => 'w-16'],
+        ['key' => 'number', 'label' => '#', 'class' => 'text-center', 'sortable' => false],
         ['key' => 'kode_peraturan', 'label' => 'Kode', 'class' => 'w-32'],
         ['key' => 'larangan', 'label' => 'Larangan'],
         ['key' => 'tindakan_ringan', 'label' => 'Tindakan Ringan'],
         ['key' => 'tindakan_berat', 'label' => 'Tindakan Berat'],
-        ['key' => 'actions', 'label' => 'Aksi', 'class' => 'w-32'],
+        ['key' => 'actions', 'label' => 'Aksi', 'class' => 'w-32', 'sortable' => false],
     ];
 
     // Untuk sorting
@@ -50,6 +49,12 @@ class TataTertib extends Component
         })
             ->orderBy($this->sortBy['column'], $this->sortBy['direction'])
             ->paginate($this->perPage);
+
+        // Tambahkan nomor urut dinamis
+        collect($peraturan->items())->transform(function ($item, $index) use ($peraturan) {
+            $item->number = ($peraturan->currentPage() - 1) * $peraturan->perPage() + $index + 1;
+            return $item;
+        });
 
         // Kirim data ke view
         return view('livewire.tata-tertib', [

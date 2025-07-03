@@ -10,8 +10,8 @@ class Guru extends Model
     protected $primaryKey = 'ID_Guru';
     protected $fillable = ['kelas_id', 'nama_guru', 'nip', 'password', 'kelas'];
 
-    public function kelas()
-    {
-        return $this->belongsTo(Kelas::class, 'kelas_id');
-    }
+    // public function kelas()
+    // {
+    //     return $this->belongsTo(Kelas::class, 'kelas_id');
+    // }
 }

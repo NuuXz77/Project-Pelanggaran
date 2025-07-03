@@ -8,17 +8,18 @@ class Pelanggaran extends Model
 {
     protected $table = 'tb_pelanggaran';
     protected $primaryKey = 'ID_Pelanggaran';
-    protected $fillable = [
-        'siswa_id',
-        'kelas_id',
-        'peraturan_id',
-        'nis',
-        'nama_siswa',
-        'kelas',
-        'tingkat_pelanggaran',
-        'sanksi',
-        'deskripsi_pelanggaran'
-    ];
+    protected $guarded=[];
+    // protected $fillable = [
+    //     'siswa_id',
+    //     'kelas_id',
+    //     'peraturan_id',
+    //     'nis',
+    //     'nama_siswa',
+    //     'kelas',
+    //     'tingkat_pelanggaran',
+    //     'sanksi',
+    //     'deskripsi_pelanggaran'
+    // ];
 
     public function siswa()
     {

@@ -1,4 +1,4 @@
-<div>
+<div class="bg-base-100 p-6 rounded-lg shadow-sm breadcrumbs text-sm">
     <!-- Breadcrumbs -->
     <div class="breadcrumbs text-sm">
         <ul>
@@ -59,20 +59,10 @@
                     onclick="return confirm('Yakin hapus data?')" /> --}}
             </x-dropdown>
         @endscope
+        <x-slot:empty>
+            <x-icon name="o-cube" label="Ups! Data tidak di temukan." />
+        </x-slot:empty>
     </x-table>
-
-    <x-modal wire:model="myModal2" title="Hello" subtitle="Livewire example">
-        <x-form no-separator>
-            <x-input label="Name" icon="o-user" placeholder="The full name" />
-            <x-input label="Email" icon="o-envelope" placeholder="The e-mail" />
-
-            {{-- Notice we are using now the `actions` slot from `x-form`, not from modal --}}
-            <x-slot:actions>
-                <x-button label="Cancel" @click="$wire.myModal2 = false" />
-                <x-button label="Confirm" class="btn-primary" />
-            </x-slot:actions>
-        </x-form>
-    </x-modal>
 
     <livewire:tatatertib.edit-tatatertib>
     <livewire:tatatertib.delete-tatatertib>
