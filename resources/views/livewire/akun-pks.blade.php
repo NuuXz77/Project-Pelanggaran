@@ -13,6 +13,7 @@
         </x-slot:middle>
         <x-slot:actions>
             <livewire:pks.add-pks />
+            <livewire:pks.add-excel-pks />
         </x-slot:actions>
     </x-header>
 

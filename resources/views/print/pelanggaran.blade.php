@@ -206,13 +206,14 @@
                     <th style="width:10%">Tingkat</th>
                     <th style="width:15%">Tindakan</th>
                     <th style="width:12%">Deskripsi</th>
+                    <th style="width:12%">Di Catat Oleh</th>
                     <th style="width:10%">Waktu</th>
                 </tr>
             </thead>
-            <tbody>
+            <tbody style="text-align:center; justify-content:center;">
                 @foreach ($pelanggaran as $index => $item)
                     <tr>
-                        <td style="text-align:center">{{ $index + 1 }}</td>
+                        <td>{{ $index + 1 }}</td>
                         <td>{{ $item->nis }}</td>
                         <td>{{ $item->nama_siswa }}</td>
                         <td>{{ $item->kelas }}</td>
@@ -220,6 +221,7 @@
                         <td>{{ $item->tingkat_pelanggaran }}</td>
                         <td>{{ $item->tindakan }}</td>
                         <td>{{ $item->deskripsi_pelanggaran }}</td>
+                        <td>{{ $item->dicatat_oleh }}</td>
                         <td>{{ $item->created_at->translatedFormat('d/m/Y H:i') }}</td>
                     </tr>
                 @endforeach

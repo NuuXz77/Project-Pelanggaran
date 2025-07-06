@@ -27,7 +27,7 @@ class Aktivitas extends Component
         ['key' => 'keterangan', 'label' => 'Keterangan' ,'class' => 'w-54'],
         ['key' => 'tanggal', 'label' => 'Tanggal'],
         ['key' => 'time', 'label' => 'Waktu'],
-        ['key' => 'actions', 'label' => 'Aksi', 'class' => 'w-32', 'sortable' => false],
+        // ['key' => 'actions', 'label' => 'Aksi', 'class' => 'w-32', 'sortable' => false],
     ];
 
     public function render()

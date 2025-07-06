@@ -6,7 +6,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, viewport-fit=cover">
     <meta name="csrf-token" content="{{ csrf_token() }}">
     <title>{{ isset($title) ? $title . ' - ' . config('app.name') : config('app.name') }}</title>
-
+    <link rel="icon" type="image/svg+xml" href="{{ asset('image/favicon.svg') }}" />
     @vite(['resources/css/app.css', 'resources/js/app.js'])
     <script src="https://cdn.jsdelivr.net/npm/apexcharts"></script>
     <script type="module" src="https://cdn.jsdelivr.net/gh/lekoala/formidable-elements@master/dist/count-up.min.js">
@@ -29,11 +29,12 @@
                 </label>
 
                 {{-- Brand --}}
-                <div>
-                    {{-- <img src="{{ asset('image/logo_smea.jpg') }}" alt="Logo Sekolah" class="h-24 sm:h-28"> --}}
-                    Kesiswaan
+                <div class="flex items-center gap-2">
+                    <img src="{{ asset('image/logo_smea.jpg') }}" alt="Logo Sekolah" width="25" />
+                    <span class="font-semibold">SiTertib</span>
                     {{-- <h1>{{ auth()->user()->ID_Akun }}</h1> --}}
                 </div>
+
             </x-slot:brand>
 
             {{-- Right side actions --}}
@@ -89,34 +90,34 @@
                     <x-menu activate-by-route>
 
                         {{-- Untuk semua role --}}
-                        <x-menu-item title="Beranda" icon="o-home" link="/" />
 
                         @if ($user->isKesiswaan())
-                            <x-menu-item title="Tata Tertib" icon="o-document" link="/tata-tertib" />
-                            <x-menu-item title="Tindakan" icon="o-document" link="/tindakan" />
-                            <x-menu-item title="Pelanggaran" icon="o-document" link="/pelanggaran" />
+                            <x-menu-item title="Beranda" icon="o-home" link="/" />
+                            <x-menu-item title="Tata Tertib" icon="o-scale" link="/tata-tertib" />
+                            <x-menu-item title="Tindakan" icon="o-user" link="/tindakan" />
+                            <x-menu-item title="Pelanggaran" icon="o-user" link="/pelanggaran" />
                             {{-- <x-menu-item title="Data Guru" icon="o-academic-cap" link="/data-guru" /> --}}
-                            {{-- <x-menu-item title="Data Kelas" icon="o-academic-cap" link="/data-kelas" /> --}}
+                            <x-menu-item title="Data Kelas" icon="o-academic-cap" link="/data-kelas" />
                             <x-menu-item title="Data Siswa/i" icon="o-user-group" link="/data-siswa" />
-                            <x-menu-item title="PKS" icon="o-user" link="/akun-pks" />
-                            {{-- <x-menu-sub title="Manajemen Akun" icon="o-cog-6-tooth">
+                            <x-menu-sub title="Manajemen Akun" icon="o-cog-6-tooth">
+                                <x-menu-item title="PKS" icon="o-user" link="/akun-pks" />
                                 <x-menu-item title="BK" icon="o-user" link="/akun-bk" />
                                 <x-menu-item title="Guru" icon="o-user" link="/akun-guru" />
-                            </x-menu-sub> --}}
+                            </x-menu-sub>
                             <x-menu-item title="Log Aktivitas" icon="o-archive-box" link="/log-aktivitas" />
                         @endif
 
                         @if ($user->isBK())
-                            <x-menu-item title="Tata Tertib" icon="o-document" link="/tata-tertib" />
-                            <x-menu-item title="BK Area" icon="o-user-group" link="/bk-area" />
+                            <x-menu-item title="Input Pelanggaran" icon="o-pencil-square" link="/input-pelanggar" />
                         @endif
 
                         @if ($user->isGuru())
-                            <x-menu-item title="Data Siswa/i" icon="o-user-group" link="/data-siswa" />
-                            <x-menu-item title="Pelanggaran" icon="o-document" link="/pelanggaran" />
+                            <x-menu-item title="Input Pelanggaran" icon="o-pencil-square" link="/input-pelanggar" />
+                            {{-- <x-menu-item title="Data Siswa/i" icon="o-user-group" link="/data-siswa" /> --}}
                         @endif
 
                         @if ($user->isPKS())
+                            {{-- <x-menu-item title="Beranda" icon="o-home" link="/" /> --}}
                             <x-menu-item title="Input Pelanggaran" icon="o-pencil-square" link="/input-pelanggar" />
                             {{-- <x-menu-item title="Data Pelanggar" icon="o-archive-box" link="/pelanggar" /> --}}
                         @endif

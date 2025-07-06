@@ -26,6 +26,7 @@ class Pelanggaran extends Component
         ['key' => 'tingkat_pelanggaran', 'label' => 'Tingkat Pelanggaran'],
         ['key' => 'tindakan', 'label' => 'Tindakan'],
         ['key' => 'deskripsi_pelanggaran', 'label' => 'Deskripsi'],
+        ['key' => 'dicatat_oleh', 'label' => 'Dicatat Oleh'],
         ['key' => 'created_at', 'label' => 'Waktu Melanggar'],
         ['key' => 'updated_at', 'label' => 'Terakhir DiUpdate', 'class' => 'text-center'],
         ['key' => 'actions', 'label' => 'Aksi', 'class' => 'w-32', 'sortable' => false],

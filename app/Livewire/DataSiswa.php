@@ -43,14 +43,14 @@ class DataSiswa extends Component
     }
 
     // Pagination
-    public $perPage = 5;
+    public $perPage = 10;
 
     // Table Headers
     public $headers = [
         ['key' => 'number', 'label' => '#', 'class' => 'text-center', 'sortable' => false],
         ['key' => 'nis', 'label' => 'NIS'],
         ['key' => 'nama_siswa', 'label' => 'Nama Siswa'],
-        ['key' => 'kelas', 'label' => 'Kelas'],
+        ['key' => 'kelas', 'label' => 'Kelas', 'sortable' => false],
         ['key' => 'total_pelanggaran', 'label' => 'Total Pelanggaran', 'class' => 'text-center'],
         ['key' => 'actions', 'label' => 'Aksi', 'class' => 'w-32', 'sortable' => false],
     ];

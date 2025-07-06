@@ -2,7 +2,7 @@
     <div class="breadcrumbs text-sm">
         <ul>
             <li><a href="/"><x-icon name="o-home" /> Beranda</a></li>
-            <li><span class="inline-flex items-center gap-2"><x-icon name="o-user" /> Siswa</span></li>
+            <li><span class="inline-flex items-center gap-2"><x-icon name="o-user-group" />Data Siswa</span></li>
         </ul>
     </div>
 
@@ -17,7 +17,7 @@
         </x-slot:actions>
     </x-header>
 
-    <x-table :headers="$headers" :rows="$siswa" :sort-by="$sortBy" per-page="perPage" :per-page-values="[5, 10, 15]" with-pagination
+    <x-table :headers="$headers" :rows="$siswa" :sort-by="$sortBy" per-page="perPage" :per-page-values="[10, 50, 100]" with-pagination
         striped>
         @scope('cell_total_pelanggaran', $item)
             <x-badge value="{{ $item->total_pelanggaran }}" class="badge-warning badge-soft" />

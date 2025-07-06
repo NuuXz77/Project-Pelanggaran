@@ -16,10 +16,10 @@ Route::get('/login', [LoginController::class, 'showLogin'])->name('login')->midd
 Route::middleware('auth')->group(function () {
 
     // Semua role bisa akses beranda
-    Volt::route('/', 'beranda')->name('beranda');
-
+    
     // Akses KESISWAAN saja
     Route::middleware('role:kesiswaan')->group(function () {
+        Volt::route('/', 'beranda')->name('beranda');
         Volt::route('/tata-tertib', 'tata-tertib');
         Volt::route('/tindakan', 'tindakan');
         Volt::route('/pelanggaran', 'pelanggaran');
@@ -35,14 +35,13 @@ Route::middleware('auth')->group(function () {
     });
 
     // Akses BK dan KESISWAAN
-    Route::middleware('role:bk,kesiswaan')->group(function () {
-        Volt::route('/tata-tertib', 'tata-tertib');
-        Volt::route('/bk-area', 'bk.index'); // contoh area BK
+    Route::middleware('role:bk,pks,guru')->group(function () {
+        Volt::route('/input-pelanggar', 'pks.input_pelanggar')->name('input_pelanggar');
     });
 
     // Akses PKS dan KESISWAAN
     Route::middleware('role:pks')->group(function () {
-        Volt::route('/input-pelanggar', 'pks.input_pelanggar');
+        // Volt::route('/input-pelanggar', 'pks.input_pelanggar')->name('input_pelanggar');
     });
 
     // Akses GURU dan KESISWAAN

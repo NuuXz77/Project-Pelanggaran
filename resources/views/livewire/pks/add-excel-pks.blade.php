@@ -4,8 +4,8 @@ use Livewire\Volt\Component;
 use Livewire\WithFileUploads;
 use Mary\Traits\Toast;
 use Illuminate\Support\Facades\DB;
-use App\Models\Siswa;
-use App\Models\Kelas;
+use Illuminate\Support\Facades\Hash;
+use App\Models\User;
 use PhpOffice\PhpSpreadsheet\IOFactory;
 
 new class extends Component {
@@ -49,27 +49,23 @@ new class extends Component {
         try {
             $spreadsheet = IOFactory::load($this->file->getRealPath());
             $this->importTotal = 0;
-            
-            // Process each worksheet
+
             foreach ($spreadsheet->getWorksheetIterator() as $worksheet) {
                 $rows = array_filter(
                     $worksheet->toArray(),
-                    fn($row) => array_filter(array_slice($row, 0, 4)), // hanya baris yg kolom 1-4 berisi
+                    fn($row) => array_filter(array_slice($row, 0, 5)),
                 );
-
-                array_shift($rows); // Hapus header
+                array_shift($rows);
                 $this->importTotal += count($rows);
             }
-            
-            // Reset total and process again with transactions
+
             $processedCount = 0;
             foreach ($spreadsheet->getWorksheetIterator() as $worksheet) {
                 $rows = array_filter(
                     $worksheet->toArray(),
-                    fn($row) => array_filter(array_slice($row, 0, 4)), // hanya baris yg kolom 1-4 berisi
+                    fn($row) => array_filter(array_slice($row, 0, 5)),
                 );
-
-                array_shift($rows); // Hapus header
+                array_shift($rows);
                 $batches = array_chunk($rows, $this->batchSize);
 
                 foreach ($batches as $batch) {
@@ -77,8 +73,6 @@ new class extends Component {
                         foreach ($batch as $index => $row) {
                             $this->processRow($index, $row);
                             $processedCount++;
-                            
-                            // Update progress after each row
                             $this->importProgress = min(100, round(($processedCount / $this->importTotal) * 100));
                         }
                     });
@@ -86,7 +80,7 @@ new class extends Component {
             }
 
             $this->dispatch('refresh');
-            $this->success('Import selesai', "{$this->importSuccess} siswa berhasil diimport" . (count($this->importErrors) ? ' dengan ' . count($this->importErrors) . ' error' : ''));
+            $this->success('Import selesai', "{$this->importSuccess} akun PKS berhasil diimport" . (count($this->importErrors) ? ' dengan ' . count($this->importErrors) . ' error' : ''));
         } catch (\Exception $e) {
             $this->importErrors[] = 'Gagal: ' . $e->getMessage();
             $this->error('Import gagal', $e->getMessage());
@@ -99,18 +93,17 @@ new class extends Component {
     public function processRow($index, $row)
     {
         try {
-            [$nis, $namaSiswa, $kelas, $jurusan] = array_map('trim', array_slice($row, 0, 4));
+            [$name, $email, $role, $status, $password] = array_map('trim', array_slice($row, 0, 5));
 
-            $this->validateRowData($nis, $namaSiswa, $kelas, $jurusan);
+            $this->validateRowData($name, $email, $role, $status, $password);
 
-            $kelasModel = Kelas::firstOrCreate(['kelas' => $kelas, 'jurusan' => $jurusan]);
-
-            Siswa::updateOrCreate(
-                ['nis' => $nis],
+            User::updateOrCreate(
+                ['email' => $email],
                 [
-                    'kelas_id' => $kelasModel->ID_Kelas,
-                    'nama_siswa' => $namaSiswa,
-                    'total_pelanggaran' => 0,
+                    'name' => $name,
+                    'role' => $role,
+                    'status' => $status,
+                    'password' => Hash::make($password),
                 ],
             );
 
@@ -121,14 +114,14 @@ new class extends Component {
         }
     }
 
-    public function validateRowData($nis, $namaSiswa, $kelas, $jurusan)
+    public function validateRowData($name, $email, $role, $status, $password)
     {
-        if (!$nis || !$namaSiswa || !$kelas || !$jurusan) {
-            throw new \Exception('Semua kolom (NIS, Nama, Kelas, Jurusan) wajib diisi.');
+        if (!$name || !$email || !$role || !$status || !$password) {
+            throw new \Exception('Semua kolom (Name, Email, Role, Status, Password) wajib diisi.');
         }
 
-        if (!is_numeric($nis)) {
-            throw new \Exception('NIS harus berupa angka.');
+        if (!filter_var($email, FILTER_VALIDATE_EMAIL)) {
+            throw new \Exception('Format email tidak valid.');
         }
     }
 
@@ -145,17 +138,18 @@ new class extends Component {
 ?>
 
 <div>
-    <x-button label="Import" class="btn btn-primary" wire:click="openModal" />
+    <x-button label="Import Akun PKS" class="btn btn-primary" wire:click="openModal" />
 
-    <x-modal wire:model="showModal" title="Import Data Siswa" separator persistent>
+    <x-modal wire:model="showModal" title="Import Akun PKS dari Excel" separator persistent>
         <div class="space-y-4">
             <div>
                 <p class="text-sm text-gray-600 mb-1">Format file Excel:</p>
                 <ul class="list-disc pl-5 text-sm text-gray-600">
-                    <li>Kolom 1: NIS</li>
-                    <li>Kolom 2: Nama Siswa</li>
-                    <li>Kolom 3: Kelas</li>
-                    <li>Kolom 4: Jurusan</li>
+                    <li>Kolom 1: Nama</li>
+                    <li>Kolom 2: Email</li>
+                    <li>Kolom 3: Role (contoh: <code>pks</code>)</li>
+                    <li>Kolom 4: Status (contoh: <code>Aktif</code> / <code>Nonaktif</code>)</li>
+                    <li>Kolom 5: Password (plaintext, akan di-hash)</li>
                     <li>File dapat memiliki multiple sheet dengan format yang sama</li>
                 </ul>
             </div>
@@ -174,15 +168,14 @@ new class extends Component {
                         <span>{{ $importProgress }}%</span>
                         <span>{{ $importSuccess }} dari {{ $importTotal }} berhasil</span>
                     </div>
-                    <progress class="progress progress-primary w-full" value="{{ $importProgress }}"
-                        max="100"></progress>
+                    <progress class="progress progress-primary w-full" value="{{ $importProgress }}" max="100"></progress>
                 </div>
             @endif
 
             @if (count($importErrors) > 0)
                 <div class="bg-red-100 p-3 rounded-md text-sm text-red-600">
                     <p><strong>Error:</strong></p>
-                    <ul class="list-disc pl-5 mt-2">
+                    <ul class="list-disc pl-5 mt-2 max-h-40 overflow-y-auto">
                         @foreach ($importErrors as $error)
                             <li>{{ $error }}</li>
                         @endforeach
@@ -197,6 +190,5 @@ new class extends Component {
         </x-slot:actions>
     </x-modal>
 
-    {{-- Toast otomatis ditampilkan oleh x-toast --}}
     <x-toast />
 </div>

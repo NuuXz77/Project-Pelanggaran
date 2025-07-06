@@ -59,7 +59,12 @@ new #[Layout('layouts.guest')] class extends Component {
             'time' => now()->format('H:i:s'),
         ]);
 
-        $this->redirectIntended(default: route('beranda'), navigate: true);
+        if ($user->role === 'kesiswaan') {
+            $this->redirect(route('beranda'), navigate: true);
+        } else {
+            $this->redirect(route('input_pelanggar'), navigate: true);
+        }
+        // $this->redirectIntended(default: route('beranda'), navigate: true);
     }
 }; ?>
 
@@ -68,7 +73,7 @@ new #[Layout('layouts.guest')] class extends Component {
         <div class="flex justify-center mb-4">
             <img src="{{ asset('image/logo_smea.jpg') }}" alt="Logo Sekolah" class="h-24 sm:h-28">
         </div>
-        <h1 class="text-xl sm:text-2xl font-semibold text-center mb-6">Kesiswaan</h1>
+        <h1 class="text-xl sm:text-2xl font-semibold text-center mb-6">SiTertib</h1>
 
         <!-- Tambahkan tampilan untuk session flash message -->
         @if (session('error'))

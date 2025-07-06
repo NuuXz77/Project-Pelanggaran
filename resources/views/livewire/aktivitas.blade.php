@@ -41,5 +41,5 @@
             </x-slot:empty>
     </x-table>
 
-    @livewire('aktivitas.delete-aktivitas')
+    {{-- @livewire('aktivitas.delete-aktivitas') --}}
 </div>

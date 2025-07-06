@@ -24,6 +24,7 @@ return new class extends Migration
             $table->string('tingkat_pelanggaran');
             $table->string('tindakan');
             $table->text('deskripsi_pelanggaran');
+            $table->string('dicatat_oleh');
             $table->timestamps();
         });
     }

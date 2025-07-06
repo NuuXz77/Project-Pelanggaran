@@ -32,9 +32,11 @@ new class extends Component {
     public $pelanggaran = '';
     public $tindakan = '';
     public $deskripsi = '';
+    // public $dicatat_oleh = {{}};
 
     public function mount()
     {
+        \Log::debug('Tindakan List:', Tindakan::all()->toArray());
         $this->loadTingkatPelanggaran();
         $this->search();
         $this->SelectPeraturan();
@@ -47,7 +49,7 @@ new class extends Component {
                 return [
                     'id' => $tindakan->ID_Tindakan,
                     'kode' => $tindakan->kode_tindakan,
-                    'name' => $tindakan->kode_tindakan . ' - ' . Str::title($tindakan->jenis),
+                    'name' => $tindakan->kode_tindakan . ' - ' . $tindakan->keterangan,
                     'keterangan' => $tindakan->keterangan,
                 ];
             })
@@ -155,7 +157,12 @@ new class extends Component {
     {
         if (!empty($tingkatId)) {
             $tindakan = Tindakan::find($tingkatId);
-            $this->tindakan = $tindakan ? $tindakan->keterangan : '';
+            if ($tindakan) {
+                // Jika keterangan kosong di database, beri nilai default
+                $this->tindakan = $tindakan->keterangan ?: 'Tindakan ' . $tindakan->kode_tindakan;
+            } else {
+                $this->tindakan = '';
+            }
         } else {
             $this->tindakan = '';
         }
@@ -163,20 +170,44 @@ new class extends Component {
 
     public function getTingkatOptionsProperty()
     {
+        // Jika tidak ada peraturan yang dipilih, return array kosong
         if (empty($this->selectedPeraturanId)) {
             return [];
         }
 
+        // Dapatkan data peraturan
         $peraturan = Peraturan::find($this->selectedPeraturanId);
         if (!$peraturan) {
             return [];
         }
 
+        // Siapkan kode tindakan yang akan dicari
         $kodeTindakan = [$peraturan->tindakan_ringan, $peraturan->tindakan_berat];
 
-        return collect($this->tingkatPelanggaranList)->whereIn('kode', $kodeTindakan)->values()->toArray();
-    }
+        // Bersihkan kode tindakan dari keterangan jika ada
+        $kodeTindakan = array_map(function ($kode) {
+            // Jika format "KODE - KETERANGAN", ambil hanya kodenya
+            if (strpos($kode, ' - ') !== false) {
+                return explode(' - ', $kode)[0];
+            }
+            return $kode;
+        }, $kodeTindakan);
 
+        // Cari tindakan dari database berdasarkan kode
+        $tindakanList = Tindakan::whereIn('kode_tindakan', $kodeTindakan)->get();
+
+        // Format opsi untuk dropdown
+        return $tindakanList
+            ->map(function ($tindakan) {
+                return [
+                    'id' => $tindakan->ID_Tindakan,
+                    'name' => $tindakan->kode_tindakan . ' - ' . ($tindakan->keterangan ?: 'Tindakan ' . $tindakan->kode_tindakan),
+                    'kode' => $tindakan->kode_tindakan,
+                    'keterangan' => $tindakan->keterangan ?: 'Tindakan ' . $tindakan->kode_tindakan,
+                ];
+            })
+            ->toArray();
+    }
     public function save()
     {
         try {
@@ -199,19 +230,15 @@ new class extends Component {
             $pelanggaran->tindakan_id = $this->selectedTingkat;
             $pelanggaran->tindakan = $this->tindakan;
             $pelanggaran->deskripsi_pelanggaran = $this->deskripsi;
+            $pelanggaran->dicatat_oleh = auth()->user()->name;
             $pelanggaran->save();
 
             Siswa::where('ID_Siswa', $this->selectedSiswaId)->increment('total_pelanggaran');
 
             $this->reset(['selectedSiswaId', 'selectedPeraturanId', 'selectedTingkat', 'nis', 'kelas', 'nama', 'pelanggaran', 'tindakan', 'deskripsi']);
 
-            // $this->searchSiswa();
-            // $this->searchPeraturan();
-
-            // Toast sukses dengan style Mary UI
             $this->toast(type: 'success', title: 'Berhasil!', description: 'Data pelanggaran berhasil disimpan!', position: 'toast-top toast-end', icon: 'o-check-circle', css: 'alert-success', timeout: 3000);
         } catch (\Illuminate\Validation\ValidationException $e) {
-            // Toast error untuk validasi gagal
             $this->toast(type: 'error', title: 'Validasi Gagal', description: implode(' ', $e->validator->errors()->all()), position: 'toast-top toast-end', icon: 'o-x-circle', css: 'alert-error', timeout: 5000);
         }
     }

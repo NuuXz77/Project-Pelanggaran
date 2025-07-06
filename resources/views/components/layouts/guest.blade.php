@@ -16,7 +16,7 @@
     background-repeat: no-repeat">
 
     {{-- NAVBAR mobile only --}}
-    <x-nav sticky class="lg:hidden">
+    {{-- <x-nav sticky class="lg:hidden">
         <x-slot:brand>
             <x-app-brand />
         </x-slot:brand>
@@ -25,7 +25,7 @@
                 <x-icon name="o-bars-3" class="cursor-pointer" />
             </label>
         </x-slot:actions>
-    </x-nav>
+    </x-nav> --}}
 
     {{-- MAIN --}}
     <x-main>
