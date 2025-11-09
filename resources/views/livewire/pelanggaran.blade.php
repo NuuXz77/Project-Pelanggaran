@@ -24,6 +24,7 @@
         </x-slot:middle>
         <x-slot:actions>
             <livewire:pelanggaran.print-pelanggaran />
+            <livewire:pelanggaran.print-baris-pelanggaran />
             <livewire:pelanggaran.filter-pelanggaran />
             <livewire:pelanggaran.add-pelanggaran />
         </x-slot:actions>

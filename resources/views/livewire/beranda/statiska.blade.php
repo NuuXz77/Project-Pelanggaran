@@ -3,19 +3,61 @@
 use App\Models\Pelanggaran;
 use App\Models\Siswa;
 use Livewire\Volt\Component;
+use Livewire\Attributes\On;
+use Carbon\Carbon;
 
 new class extends Component {
     public int $total = 0;
     public int $ringan = 0;
     public int $berat = 0;
     public int $siswa = 0;
+    public $filterType = 'day';
+    public $filterDate;
 
-    public function mount()
+    public function mount($filterType = 'day', $filterDate = null)
     {
-        $this->total = Pelanggaran::count();
-        $this->ringan = Pelanggaran::where('tingkat_pelanggaran', 'LIKE', 'R%')->count();
-        $this->berat = Pelanggaran::where('tingkat_pelanggaran', 'LIKE', 'B%')->count();
-        $this->siswa = Siswa::count();
+        $this->filterType = $filterType;
+        $this->filterDate = $filterDate ?: Carbon::now()->format('Y-m-d');
+        $this->loadData();
+    }
+
+    #[On('filter-updated')]
+    public function updateFilter($type, $date)
+    {
+        $this->filterType = $type;
+        $this->filterDate = $date;
+        $this->loadData();
+    }
+
+    protected function loadData()
+    {
+        $date = Carbon::parse($this->filterDate);
+        
+        // Build query based on filter type
+        $query = Pelanggaran::query();
+        
+        switch ($this->filterType) {
+            case 'day':
+                $query->whereDate('created_at', $date);
+                break;
+            case 'week':
+                $query->whereBetween('created_at', [
+                    $date->copy()->startOfWeek(),
+                    $date->copy()->endOfWeek()
+                ]);
+                break;
+            case 'month':
+                $query->whereBetween('created_at', [
+                    $date->copy()->startOfMonth(),
+                    $date->copy()->endOfMonth()
+                ]);
+                break;
+        }
+
+        $this->total = $query->count();
+        $this->ringan = (clone $query)->where('tingkat_pelanggaran', 'LIKE', 'R%')->count();
+        $this->berat = (clone $query)->where('tingkat_pelanggaran', 'LIKE', 'B%')->count();
+        $this->siswa = Siswa::count(); // Total siswa tidak berubah dengan filter
     }
 };
 ?>
@@ -39,7 +81,15 @@ new class extends Component {
         <div class="stat-value">
             <count-up>{{ $total }}</count-up>
         </div>
-        <div class="stat-desc">Semua tingkat</div>
+        <div class="stat-desc">
+            @if($filterType === 'day')
+                Hari ini
+            @elseif($filterType === 'week')
+                Minggu ini
+            @else
+                Bulan ini
+            @endif
+        </div>
     </div>
 
     <!-- Pelanggaran Ringan -->
@@ -59,7 +109,15 @@ new class extends Component {
         <div class="stat-value">
             <count-up>{{ $ringan }}</count-up>
         </div>
-        <div class="stat-desc">Data terkini</div>
+        <div class="stat-desc">
+            @if($filterType === 'day')
+                Hari ini
+            @elseif($filterType === 'week')
+                Minggu ini
+            @else
+                Bulan ini
+            @endif
+        </div>
     </div>
 
     <!-- Pelanggaran Berat -->
@@ -79,7 +137,15 @@ new class extends Component {
         <div class="stat-value">
             <count-up>{{ $berat }}</count-up>
         </div>
-        <div class="stat-desc">Perlu perhatian khusus</div>
+        <div class="stat-desc">
+            @if($filterType === 'day')
+                Hari ini
+            @elseif($filterType === 'week')
+                Minggu ini
+            @else
+                Bulan ini
+            @endif
+        </div>
     </div>
 
     <!-- Siswa Aktif -->
@@ -99,6 +165,6 @@ new class extends Component {
         <div class="stat-value">
             <count-up>{{ $siswa }}</count-up>
         </div>
-        <div class="stat-desc">Data terkini</div>
+        <div class="stat-desc">Total keseluruhan</div>
     </div>
 </div>

@@ -6,7 +6,11 @@
             <li><x-icon name="o-user" /> Detail Siswa</li>
         </ul>
     </div>
-    <x-header title="Detail Siswa" subtitle="Informasi lengkap siswa dan pelanggaran" separator />
+    
+    <div class="flex justify-between items-center">
+        <x-header title="Detail Siswa" subtitle="Informasi lengkap siswa dan pelanggaran" separator />
+        <livewire:siswa.print-siswa :siswa="$siswa" />
+    </div>
 
     <!-- Card Data Siswa -->
     <x-card class="mb-6 bg-base-300">
@@ -49,7 +53,8 @@
         @endif
     </x-card>
 
-    <div class="mt-6">
+    <div class="mt-6 flex gap-2">
         <x-button label="Kembali" icon="o-arrow-uturn-left" link="/data-siswa" class="btn-neutral" />
+        <livewire:siswa.print-siswa :siswa="$siswa" />
     </div>
 </div>

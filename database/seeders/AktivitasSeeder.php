@@ -13,13 +13,13 @@ class AktivitasSeeder extends Seeder
      */
     public function run(): void
     {
-        Aktivitas::insert([
-            [
-                'ID_Akun' => 1,
-                'keterangan' => 'Mengakses halaman dashboard',
-                'tanggal' => now()->toDateString(),
-                'time' => now()->format('H:i:s'),
-            ],
-        ]);
+        // Aktivitas::insert([
+        //     [
+        //         'ID_Akun' => 1,
+        //         'keterangan' => 'Mengakses halaman dashboard',
+        //         'tanggal' => now()->toDateString(),
+        //         'time' => now()->format('H:i:s'),
+        //     ],
+        // ]);
     }
 }

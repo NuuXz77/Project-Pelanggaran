@@ -12,6 +12,7 @@
         </x-slot:middle>
         <x-slot:actions>
             <livewire:siswa.filter-siswa />
+            <livewire:siswa.print-per-siswa />
             <livewire:siswa.add-siswa />
             <livewire:siswa.add-excel-siswa />
         </x-slot:actions>

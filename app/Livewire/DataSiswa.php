@@ -19,7 +19,8 @@ class DataSiswa extends Component
     protected $listeners = [
         'refresh' => 'refreshTable',
         'update-filter' => 'applyFilter',
-        'reset-filter' => 'resetFilter'
+        'reset-filter' => 'resetFilter',
+        'save-filters-for-print' => 'saveFiltersForPrint'
     ];
 
     public function refreshTable()
@@ -40,6 +41,20 @@ class DataSiswa extends Component
     {
         $this->reset(['nama_siswa', 'kelas_id', 'tanggal_awal', 'tanggal_akhir']);
         $this->resetPage();
+    }
+
+    // Method untuk menyimpan filter ke session sebelum print
+    public function saveFiltersForPrint()
+    {
+        session()->put([
+            'siswa_search' => $this->search,
+            'siswa_filter_nama' => $this->nama_siswa,
+            'siswa_filter_kelas_id' => $this->kelas_id,
+            'siswa_filter_tanggal_awal' => $this->tanggal_awal,
+            'siswa_filter_tanggal_akhir' => $this->tanggal_akhir,
+            'siswa_sort_column' => $this->sortBy['column'],
+            'siswa_sort_direction' => $this->sortBy['direction']
+        ]);
     }
 
     // Pagination

@@ -17,7 +17,7 @@ new class extends Component {
 <div>
     <x-button 
         icon="o-printer" 
-        label="Cetak" 
+        label="Cetak Per Data" 
         wire:click="print" 
         spinner
         class="btn-primary"

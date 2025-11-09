@@ -4,7 +4,6 @@ use Livewire\Volt\Component;
 use Illuminate\Support\Facades\Auth;
 use App\Models\Aktivitas;
 
-
 new class extends Component {
     public function logout()
     {
@@ -29,5 +28,15 @@ new class extends Component {
 };
 ?>
 <div>
+    <x-modal wire:model="myModal1" title="Hey" class="backdrop-blur">
+        Press `ESC`, click outside or click `CANCEL` to close.
+
+        <x-slot:actions>
+            <x-button label="Cancel" @click="$wire.myModal1 = false" />
+        </x-slot:actions>
+    </x-modal>
+
+    <x-button label="Open" @click="$wire.myModal1 = true" />
+    
     <x-menu-item title="Logout" wire:click.stop="logout" spinner="logout" icon="" />
 </div>

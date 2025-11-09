@@ -8,7 +8,7 @@
     </div>
 
     <!-- Header dengan search -->
-    <x-header title="Data Kelas" subtitle="Daftar Kelas dan Wali Kelas" separator progress-indicator>
+    <x-header title="Data Kelas" subtitle="Daftar Kelas" separator progress-indicator>
         <x-slot:middle class="!justify-end">
             <x-input wire:model.live.debounce.500ms="search" icon="o-magnifying-glass" placeholder="Cari..." />
         </x-slot:middle>

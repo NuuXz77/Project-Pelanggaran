@@ -4,22 +4,59 @@ use Illuminate\Support\Facades\Route;
 use App\Http\Controllers\LoginController;
 use App\Livewire\DetailSiswa;
 use App\Models\Pelanggaran;
+use App\Models\Peraturan;
 use Livewire\Volt\Volt;
-// use App\Livewire\Pages\SiswaDetail; // Sesuaikan dengan path Anda
 use App\Models\Siswa;
 
+// Fungsi helper untuk membuat alias pelanggaran dari database
+function getAliasPelanggaran($pelanggaran) {
+    // Cari di tabel peraturan berdasarkan kolom 'larangan'
+    $peraturan = Peraturan::where('larangan', $pelanggaran)->first();
+    
+    if ($peraturan && !empty($peraturan->alias)) {
+        return strtoupper($peraturan->alias);
+    }
+    
+    // Jika tidak ada alias di database, buat otomatis dari 3 huruf pertama
+    $words = explode(' ', $pelanggaran);
+    if (count($words) >= 2) {
+        // Ambil huruf pertama dari 2-3 kata pertama
+        $alias = '';
+        for ($i = 0; $i < min(3, count($words)); $i++) {
+            $alias .= strtoupper(substr($words[$i], 0, 1));
+        }
+        return $alias;
+    }
+    
+    // Fallback: ambil 3 huruf pertama
+    return strtoupper(substr(str_replace(' ', '', $pelanggaran), 0, 3));
+}
+
+// Fungsi untuk mendapatkan semua alias mapping
+function getAllAliasMapping() {
+    $jenisPelanggaran = Pelanggaran::select('pelanggaran')
+        ->distinct()
+        ->orderBy('pelanggaran')
+        ->pluck('pelanggaran');
+    
+    $aliasMapping = [];
+    foreach ($jenisPelanggaran as $jenis) {
+        $aliasMapping[$jenis] = getAliasPelanggaran($jenis);
+    }
+    
+    return $aliasMapping;
+}
+
 // Route login
-// Route::get('/login', fn() => Volt::mount('auth.loginform'))->middleware('guest')->name('login');
 Route::get('/login', [LoginController::class, 'showLogin'])->name('login')->middleware('guest');
 
 // Group route hanya untuk yang sudah login
 Route::middleware('auth')->group(function () {
 
-    // Semua role bisa akses beranda
-    
     // Akses KESISWAAN saja
     Route::middleware('role:kesiswaan')->group(function () {
         Volt::route('/', 'beranda')->name('beranda');
+        Volt::route('/profile', 'profile')->name('profile');
         Volt::route('/tata-tertib', 'tata-tertib');
         Volt::route('/tindakan', 'tindakan');
         Volt::route('/pelanggaran', 'pelanggaran');
@@ -37,6 +74,7 @@ Route::middleware('auth')->group(function () {
     // Akses BK dan KESISWAAN
     Route::middleware('role:bk,pks,guru')->group(function () {
         Volt::route('/input-pelanggar', 'pks.input_pelanggar')->name('input_pelanggar');
+        Volt::route('/siswa-kesiangan', 'pks.siswa_kesiangan')->name('siswa_kesiangan');
     });
 
     // Akses PKS dan KESISWAAN
@@ -74,16 +112,13 @@ Route::middleware('auth')->group(function () {
             })
             ->when($filters['tanggal_awal'] || $filters['tanggal_akhir'], function ($query) use ($filters) {
                 if ($filters['tanggal_awal'] && $filters['tanggal_akhir']) {
-                    // Jika kedua tanggal ada, gunakan between
                     $query->whereBetween('created_at', [
                         $filters['tanggal_awal'] . ' 00:00:00',
                         $filters['tanggal_akhir'] . ' 23:59:59'
                     ]);
                 } elseif ($filters['tanggal_awal']) {
-                    // Jika hanya tanggal awal, filter dari tanggal itu saja
                     $query->whereDate('created_at', $filters['tanggal_awal']);
                 } else {
-                    // Jika hanya tanggal akhir, filter sampai tanggal itu saja
                     $query->whereDate('created_at', $filters['tanggal_akhir']);
                 }
             })
@@ -102,7 +137,7 @@ Route::middleware('auth')->group(function () {
 
         $pelanggaran = $query->get();
 
-        // Format data untuk print (split datetime columns)
+        // Format data untuk print
         $pelanggaran->transform(function ($item) {
             $createdAt = \Carbon\Carbon::parse($item->created_at);
             $updatedAt = \Carbon\Carbon::parse($item->updated_at);
@@ -115,7 +150,7 @@ Route::middleware('auth')->group(function () {
             return $item;
         });
 
-        // Format data kelas untuk ditampilkan
+        // Format data kelas
         $kelas = null;
         if ($filters['kelas_id']) {
             $kelasModel = \App\Models\Kelas::find($filters['kelas_id']);
@@ -135,4 +170,206 @@ Route::middleware('auth')->group(function () {
             ]
         ]);
     })->name('pelanggaran.print');
+
+    // Route print pelanggaran per baris (seperti per siswa)
+    Route::get('/pelanggaran/print-baris', function () {
+        // Ambil filter dari session
+        $filters = [
+            'search' => session('pelanggaran_search', ''),
+            'nama' => session('pelanggaran_filter_nama', ''),
+            'kelas_id' => session('pelanggaran_filter_kelas_id', ''),
+            'tanggal_awal' => session('pelanggaran_filter_tanggal_awal', ''),
+            'tanggal_akhir' => session('pelanggaran_filter_tanggal_akhir', ''),
+        ];
+
+        // Query pelanggaran dengan filter
+        $pelanggaranQuery = Pelanggaran::query()
+            ->when($filters['nama'], function ($query) use ($filters) {
+                $query->where('nama_siswa', 'like', '%' . $filters['nama'] . '%');
+            })
+            ->when($filters['kelas_id'], function ($query) use ($filters) {
+                $query->where('kelas_id', $filters['kelas_id']);
+            })
+            ->when($filters['tanggal_awal'] && $filters['tanggal_akhir'], function ($query) use ($filters) {
+                // Jika kedua tanggal ada, gunakan whereBetween untuk rentang waktu
+                $query->whereBetween('created_at', [
+                    $filters['tanggal_awal'] . ' 00:00:00',
+                    $filters['tanggal_akhir'] . ' 23:59:59'
+                ]);
+            })
+            ->when($filters['tanggal_awal'] && !$filters['tanggal_akhir'], function ($query) use ($filters) {
+                // Jika hanya tanggal awal
+                $query->whereDate('created_at', '>=', $filters['tanggal_awal']);
+            })
+            ->when(!$filters['tanggal_awal'] && $filters['tanggal_akhir'], function ($query) use ($filters) {
+                // Jika hanya tanggal akhir
+                $query->whereDate('created_at', '<=', $filters['tanggal_akhir']);
+            })
+            ->when($filters['search'], function ($query) use ($filters) {
+                $query->where(function ($q) use ($filters) {
+                    $q->where('nis', 'like', '%' . $filters['search'] . '%')
+                        ->orWhere('nama_siswa', 'like', '%' . $filters['search'] . '%')
+                        ->orWhere('kelas', 'like', '%' . $filters['search'] . '%');
+                });
+            });
+
+        $pelanggaranData = $pelanggaranQuery->get();
+
+        // Ambil semua jenis pelanggaran yang unik dari data yang difilter
+        $jenisPelanggaran = $pelanggaranData->pluck('pelanggaran')->unique()->sort()->values();
+
+        // Buat mapping alias
+        $aliasMapping = [];
+        foreach ($jenisPelanggaran as $jenis) {
+            $aliasMapping[$jenis] = getAliasPelanggaran($jenis);
+        }
+
+        // Group by siswa dan hitung pelanggaran per jenis
+        $siswaGrouped = $pelanggaranData->groupBy('nis');
+        
+        $siswaData = $siswaGrouped->map(function ($items, $nis) use ($jenisPelanggaran) {
+            $firstItem = $items->first();
+            $pelanggaranCount = [];
+            
+            foreach ($jenisPelanggaran as $jenis) {
+                $count = $items->where('pelanggaran', $jenis)->count();
+                $pelanggaranCount[$jenis] = $count > 0 ? $count : '-';
+            }
+            
+            return [
+                'nis' => $nis,
+                'nama_siswa' => $firstItem->nama_siswa,
+                'kelas' => $firstItem->kelas,
+                'pelanggaran' => $pelanggaranCount,
+                'total' => $items->count()
+            ];
+        })->values();
+
+        // Format kelas untuk filter info
+        $kelas = null;
+        if ($filters['kelas_id']) {
+            $kelasModel = \App\Models\Kelas::find($filters['kelas_id']);
+            $kelas = $kelasModel ? $kelasModel->kelas . ' ' . $kelasModel->jurusan : null;
+        }
+
+        return view('print.baris-pelanggaran', [
+            'siswaData' => $siswaData,
+            'jenisPelanggaran' => $jenisPelanggaran,
+            'aliasMapping' => $aliasMapping,
+            'filter' => [
+                'search' => $filters['search'],
+                'nama' => $filters['nama'],
+                'kelas' => $kelas,
+                'tanggal_awal' => $filters['tanggal_awal'],
+                'tanggal_akhir' => $filters['tanggal_akhir'],
+            ]
+        ]);
+    })->name('pelanggaran.print-baris');
+
+    Route::get('/siswa/{siswa}/print', function (\App\Models\Siswa $siswa) {
+        $pelanggarans = \App\Models\Pelanggaran::where('nis', $siswa->nis)
+            ->orderBy('created_at', 'desc')
+            ->get();
+        
+        return view('print.siswa', [
+            'siswa' => $siswa,
+            'pelanggarans' => $pelanggarans
+        ]);
+    })->name('siswa.print');
+
+    // Route print semua data siswa dengan pelanggaran + FILTER
+    Route::get('/siswa/print-all', function () {
+        // Ambil filter dari session
+        $filters = [
+            'search' => session('siswa_search', ''),
+            'nama_siswa' => session('siswa_filter_nama', ''),
+            'kelas_id' => session('siswa_filter_kelas_id', ''),
+            'tanggal_awal' => session('siswa_filter_tanggal_awal', ''),
+            'tanggal_akhir' => session('siswa_filter_tanggal_akhir', ''),
+            'sort_column' => session('siswa_sort_column', 'nama_siswa'),
+            'sort_direction' => in_array(strtolower(session('siswa_sort_direction', 'asc')), ['asc', 'desc'])
+                ? session('siswa_sort_direction', 'asc')
+                : 'asc'
+        ];
+
+        // Query siswa dengan filter
+        $siswaQuery = \App\Models\Siswa::with('kelas')
+            ->when($filters['search'], function ($query) use ($filters) {
+                $query->where(function ($q) use ($filters) {
+                    $q->where('nama_siswa', 'like', '%' . $filters['search'] . '%')
+                        ->orWhere('nis', 'like', '%' . $filters['search'] . '%')
+                        ->orWhereHas('kelas', function ($q) use ($filters) {
+                            $q->where('kelas', 'like', '%' . $filters['search'] . '%');
+                        });
+                });
+            })
+            ->when($filters['nama_siswa'], function ($query) use ($filters) {
+                $query->where('nama_siswa', 'like', '%' . $filters['nama_siswa'] . '%');
+            })
+            ->when($filters['kelas_id'], function ($query) use ($filters) {
+                $query->where('kelas_id', $filters['kelas_id']);
+            })
+            ->when($filters['tanggal_awal'], function ($query) use ($filters) {
+                $query->whereDate('created_at', '>=', $filters['tanggal_awal']);
+            })
+            ->when($filters['tanggal_akhir'], function ($query) use ($filters) {
+                $query->whereDate('created_at', '<=', $filters['tanggal_akhir']);
+            })
+            ->orderBy($filters['sort_column'], $filters['sort_direction']);
+
+        $siswa = $siswaQuery->get();
+        
+        // Ambil semua jenis pelanggaran yang unik
+        $jenisPelanggaran = \App\Models\Pelanggaran::select('pelanggaran')
+            ->distinct()
+            ->orderBy('pelanggaran')
+            ->pluck('pelanggaran');
+        
+        // Buat mapping alias dari database
+        $aliasMapping = [];
+        foreach ($jenisPelanggaran as $jenis) {
+            $aliasMapping[$jenis] = getAliasPelanggaran($jenis);
+        }
+        
+        // Untuk setiap siswa, hitung jumlah pelanggaran per jenis
+        $siswaWithPelanggaran = $siswa->map(function ($s) use ($jenisPelanggaran) {
+            $pelanggaranCount = [];
+            
+            foreach ($jenisPelanggaran as $jenis) {
+                $count = \App\Models\Pelanggaran::where('nis', $s->nis)
+                    ->where('pelanggaran', $jenis)
+                    ->count();
+                    
+                $pelanggaranCount[$jenis] = $count > 0 ? $count : '-';
+            }
+            
+            return [
+                'siswa' => $s,
+                'pelanggaran' => $pelanggaranCount,
+                'total' => \App\Models\Pelanggaran::where('nis', $s->nis)->count()
+            ];
+        });
+
+        // Format kelas untuk filter info
+        $kelas = null;
+        if ($filters['kelas_id']) {
+            $kelasModel = \App\Models\Kelas::find($filters['kelas_id']);
+            $kelas = $kelasModel ? $kelasModel->kelas . ' ' . $kelasModel->jurusan : null;
+        }
+        
+        return view('print.per-siswa', [
+            'siswaData' => $siswaWithPelanggaran,
+            'jenisPelanggaran' => $jenisPelanggaran,
+            'aliasMapping' => $aliasMapping,
+            'filter' => [
+                'search' => $filters['search'],
+                'nama_siswa' => $filters['nama_siswa'],
+                'kelas' => $kelas,
+                'tanggal_awal' => $filters['tanggal_awal'],
+                'tanggal_akhir' => $filters['tanggal_akhir'],
+                'sort_column' => $filters['sort_column'],
+                'sort_direction' => $filters['sort_direction']
+            ]
+        ]);
+    })->name('siswa.print-all');
 });

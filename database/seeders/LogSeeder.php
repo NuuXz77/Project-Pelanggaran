@@ -13,13 +13,13 @@ class LogSeeder extends Seeder
      */
     public function run(): void
     {
-        Log::insert([
-            [
-                'ID_Akun' => 1,
-                'keterangan' => 'Login berhasil',
-                'tanggal' => now()->toDateString(),
-                'time' => now()->format('H:i:s'),
-            ],
-        ]);
+        // Log::insert([
+        //     [
+        //         'ID_Akun' => 1,
+        //         'keterangan' => 'Login berhasil',
+        //         'tanggal' => now()->toDateString(),
+        //         'time' => now()->format('H:i:s'),
+        //     ],
+        // ]);
     }
 }

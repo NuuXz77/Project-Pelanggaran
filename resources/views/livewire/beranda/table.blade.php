@@ -3,16 +3,61 @@
 use Livewire\Volt\Component;
 use App\Models\Siswa;
 use App\Models\Kelas;
+use Livewire\Attributes\On;
+use Carbon\Carbon;
 
 new class extends Component {
     public $siswa;
     public $headers = [];
     public $kelasPelanggar = [];
     public $kelasHeaders = [];
-    public function mount()
+    public $filterType = 'day';
+    public $filterDate;
+
+    public function mount($filterType = 'day', $filterDate = null)
     {
+        $this->filterType = $filterType;
+        $this->filterDate = $filterDate ?: Carbon::now()->format('Y-m-d');
+        
+        $this->kelasHeaders = [
+            ['key' => 'kelas', 'label' => 'Kelas'], 
+            ['key' => 'total_pelanggaran', 'label' => 'Total Pelanggaran', 'class' => 'text-center']
+        ];
+
+        $this->headers = [
+            ['key' => 'number', 'label' => '#', 'class' => 'text-center', 'sortable' => false], 
+            ['key' => 'nis', 'label' => 'NIS'], 
+            ['key' => 'nama_siswa', 'label' => 'Nama Siswa'], 
+            ['key' => 'kelas', 'label' => 'Kelas'], 
+            ['key' => 'total_pelanggaran', 'label' => 'Total Pelanggaran', 'class' => 'text-center']
+        ];
+
+        $this->loadData();
+    }
+
+    #[On('filter-updated')]
+    public function updateFilter($type, $date)
+    {
+        $this->filterType = $type;
+        $this->filterDate = $date;
+        $this->loadData();
+    }
+
+    protected function loadData()
+    {
+        $date = Carbon::parse($this->filterDate);
+
+        // Build date range based on filter type
+        $dateRange = $this->getDateRange($date);
+
+        // ✅ Data untuk siswa pelanggar terbanyak (dengan filter)
         $this->siswa = Siswa::with(['kelas'])
-            ->withCount('pelanggaran')
+            ->withCount(['pelanggaran' => function ($query) use ($dateRange) {
+                if ($dateRange) {
+                    $query->whereBetween('tb_pelanggaran.created_at', $dateRange);
+                }
+            }])
+            ->having('pelanggaran_count', '>', 0)
             ->orderByDesc('pelanggaran_count')
             ->take(5)
             ->get()
@@ -27,8 +72,13 @@ new class extends Component {
                 ];
             });
 
-        // ✅ Data untuk kelas pelanggar terbanyak
-        $this->kelasPelanggar = Kelas::withCount('pelanggaran')
+        // ✅ Data untuk kelas pelanggar terbanyak (dengan filter)
+        $this->kelasPelanggar = Kelas::withCount(['pelanggaran' => function ($query) use ($dateRange) {
+                if ($dateRange) {
+                    $query->whereBetween('tb_pelanggaran.created_at', $dateRange);
+                }
+            }])
+            ->having('pelanggaran_count', '>', 0)
             ->orderByDesc('pelanggaran_count')
             ->take(5)
             ->get()
@@ -38,11 +88,20 @@ new class extends Component {
                     'total_pelanggaran' => $item->pelanggaran_count,
                 ];
             });
+    }
 
-        // ✅ Header untuk tabel kelas pelanggar
-        $this->kelasHeaders = [['key' => 'kelas', 'label' => 'Kelas'], ['key' => 'total_pelanggaran', 'label' => 'Total Pelanggaran', 'class' => 'text-center']];
-
-        $this->headers = [['key' => 'number', 'label' => '#', 'class' => 'text-center', 'sortable' => false], ['key' => 'nis', 'label' => 'NIS'], ['key' => 'nama_siswa', 'label' => 'Nama Siswa'], ['key' => 'kelas', 'label' => 'Kelas'], ['key' => 'total_pelanggaran', 'label' => 'Total Pelanggaran', 'class' => 'text-center']];
+    protected function getDateRange($date)
+    {
+        switch ($this->filterType) {
+            case 'day':
+                return [$date->copy()->startOfDay(), $date->copy()->endOfDay()];
+            case 'week':
+                return [$date->copy()->startOfWeek(), $date->copy()->endOfWeek()];
+            case 'month':
+                return [$date->copy()->startOfMonth(), $date->copy()->endOfMonth()];
+            default:
+                return null;
+        }
     }
 }; ?>
 
